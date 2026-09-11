@@ -14,6 +14,54 @@ let paginaGlobal = null;
 let loginEmAndamento = null;
 let intervalKeepAlive = null;
 
+// Função auxiliar para encontrar o executável do Chrome instalado no servidor/local
+function obterCaminhoChrome() {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        return process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+
+    try {
+        // Tenta resolver dinamicamente via API nativa do Puppeteer
+        const puppeteerCore = require('puppeteer');
+        if (puppeteerCore.executablePath) {
+            const pathNatividades = puppeteerCore.executablePath();
+            if (fs.existsSync(pathNatividades)) return pathNatividades;
+        }
+    } catch (e) {}
+
+    // Locais padrão de cache no Render/Linux
+    const possibilidadesCache = [
+        '/opt/render/.cache/puppeteer',
+        path.join(process.cwd(), '.cache', 'puppeteer'),
+        path.join(require('os').homedir(), '.cache', 'puppeteer')
+    ];
+
+    for (const baseDir of possibilidadesCache) {
+        const chromeDir = path.join(baseDir, 'chrome');
+        if (fs.existsSync(chromeDir)) {
+            const buscarExecutavelRecursivo = (dir) => {
+                const itens = fs.readdirSync(dir);
+                for (const item of itens) {
+                    const fullPath = path.join(dir, item);
+                    const stat = fs.statSync(fullPath);
+                    if (stat.isDirectory()) {
+                        const res = buscarExecutavelRecursivo(fullPath);
+                        if (res) return res;
+                    } else if (item === 'chrome' && !fullPath.endsWith('.js')) {
+                        return fullPath;
+                    }
+                }
+                return null;
+            };
+
+            const achou = buscarExecutavelRecursivo(chromeDir);
+            if (achou) return achou;
+        }
+    }
+
+    return null;
+}
+
 async function salvarTokenSessao(pagina) {
     try {
         const cookies = await pagina.cookies();
@@ -44,7 +92,6 @@ async function aplicarTokenSessao(pagina) {
 
         if (cookies?.length) await pagina.setCookie(...cookies);
 
-        // Aplica o localStorage/sessionStorage ANTES de navegar para a página de destino
         await pagina.evaluate((ls, ss) => {
             try {
                 if (ls) {
@@ -94,10 +141,15 @@ async function _executarLogin() {
         paginaGlobal = null;
     }
 
-    // NAVEGADOR CONFIGURADO PARA LOCALHOST E RENDER (LINUX)
-    navegadorGlobal = await puppeteer.launch({
+    const chromeExecutablePath = obterCaminhoChrome();
+    if (chromeExecutablePath) {
+        console.log(`🚀 [AUTH] Usando Chrome localizado em: ${chromeExecutablePath}`);
+    } else {
+        console.warn('⚠️ [AUTH] Executável customizado não encontrado. Usando inicialização padrão do Puppeteer.');
+    }
+
+    const launchOptions = {
         headless: 'new',
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -109,8 +161,13 @@ async function _executarLogin() {
             '--disable-extensions',
             '--disable-blink-features=AutomationControlled'
         ]
-    });
+    };
 
+    if (chromeExecutablePath) {
+        launchOptions.executablePath = chromeExecutablePath;
+    }
+
+    navegadorGlobal = await puppeteer.launch(launchOptions);
     paginaGlobal = await navegadorGlobal.newPage();
     await paginaGlobal.setViewport({ width: 1280, height: 800 });
 
@@ -118,18 +175,12 @@ async function _executarLogin() {
     if (fs.existsSync(TOKEN_FILE)) {
         console.log('🔄 [AUTH] Carregando token de sessão existente em segundo plano...');
         try {
-            // 1. Acessa o domínio base primeiro para permitir injeção de localStorage/cookies do domínio correto
             await paginaGlobal.goto('https://apps.autoavaliar.com.br/login/app', { waitUntil: 'domcontentloaded', timeout: 20000 });
-            
-            // 2. Injeta as credenciais salvas
             await aplicarTokenSessao(paginaGlobal);
-
-            // 3. Força a navegação já autenticado
             await paginaGlobal.goto('https://apps.autoavaliar.com.br/usbi#/app/avaliacoes/avaliacoes/lista', { waitUntil: 'networkidle2', timeout: 25000 });
 
             await new Promise(r => setTimeout(r, 2000));
 
-            // Verifica se a sessão se manteve (não foi jogada pro login)
             if (!paginaGlobal.url().includes('/login')) {
                 console.log('✅ [AUTH] Sessão restaurada com sucesso!');
                 await fecharModalAlertaSeExistir(paginaGlobal);
@@ -181,11 +232,9 @@ async function _executarLogin() {
     return { navegador: navegadorGlobal, pagina: paginaGlobal };
 }
 
-// LOOP AUTOMÁTICO PARA MANTER A SESSÃO SEMPRE ATIVA
 function iniciarLoopManutencaoSessao() {
     if (intervalKeepAlive) clearInterval(intervalKeepAlive);
 
-    // A cada 5 minutos recarrega a página / salva o token atualizado para não cair
     intervalKeepAlive = setInterval(async () => {
         if (paginaGlobal && !paginaGlobal.isClosed()) {
             try {

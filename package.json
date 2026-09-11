@@ -1,4 +1,11 @@
 {
+  "name": "logicorgautoma--o",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "npx puppeteer browsers install chrome"
+  },
   "dependencies": {
     "express": "^5.2.1",
     "puppeteer": "^25.10.0",
