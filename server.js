@@ -35,7 +35,7 @@ async function validarSessaoAtiva() {
         await sessao.pagina.evaluate(() => true);
         return sessao;
     } catch (e) {
-        console.warn('⚠️ Sessão/página inválida detectada. Resetando instância do navegador...');
+        console.warn('⚠️ [SERVIDOR] Sessão/página inválida detectada. Resetando instância do navegador...');
         await resetarSessao();
         return await obterSessaoAutenticada();
     }
@@ -46,6 +46,8 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
     let pagina = null;
 
     try {
+        console.log(`🔍 [SERVIDOR] Iniciando busca pela placa: ${placaLimpa} (Tentativa ${tentativa})`);
+
         const sessao = await validarSessaoAtiva();
         pagina = sessao.pagina;
 
@@ -60,11 +62,14 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
 
         // Navega para a lista se estiver fora ou sem o input na tela
         if (!estaNaLista || !temCampoBusca) {
-            await pagina.goto(URL_LISTA_AVALIACOES, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            console.log('🌐 [SERVIDOR] Navegando para a lista de avaliações...');
+            // Aumentado timeout para 45s para evitar acionamento prematuro no Render
+            await pagina.goto(URL_LISTA_AVALIACOES, { waitUntil: 'domcontentloaded', timeout: 45000 });
             await fecharModalAlertaSeExistir(pagina);
         }
 
-        await pagina.waitForSelector(seletorInput, { visible: true, timeout: 15000 });
+        console.log('⏳ [SERVIDOR] Aguardando campo de digitação...');
+        await pagina.waitForSelector(seletorInput, { visible: true, timeout: 20000 });
 
         // Remove modais/overlays que possam bloquear interação com a caixa de texto
         await pagina.evaluate(() => {
@@ -72,7 +77,7 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
             overlays.forEach(o => o.remove());
         });
 
-        // Limpa o campo diretamente no DOM e spamma eventos para o Digest Loop do AngularJS
+        // Limpa o campo diretamente no DOM e dispara eventos para o Digest Loop do AngularJS
         await pagina.evaluate((sel) => {
             const input = document.querySelector(sel);
             if (input) {
@@ -86,11 +91,12 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
         await pagina.keyboard.press('Backspace');
 
         // Digita a placa e pesquisa
+        console.log(`⌨️ [SERVIDOR] Digitando a placa: ${placaLimpa}`);
         await pagina.type(seletorInput, placaLimpa, { delay: 40 });
         await pagina.keyboard.press('Enter');
         
         // Aguarda transição da requisição Angular
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 2500));
         await fecharModalAlertaSeExistir(pagina);
 
         const temResultado = await pagina.evaluate(() => {
@@ -102,23 +108,26 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
         });
 
         if (!temResultado) {
+            console.warn(`⚠️ [SERVIDOR] Placa ${placaLimpa} não encontrada na listagem.`);
             throw new Error('Placa não encontrada no sistema.');
         }
 
         const seletorResultado = 'table tbody tr td a, table tbody tr td:nth-child(2)';
-        await pagina.waitForSelector(seletorResultado, { timeout: 5000 });
+        await pagina.waitForSelector(seletorResultado, { timeout: 10000 });
 
         await pagina.evaluate(() => {
             const modais = document.querySelectorAll('.modal, .modal-backdrop, [class*="overlay"], .ngdialog');
             modais.forEach(m => m.remove());
         });
 
+        console.log('🖱️ [SERVIDOR] Clicando no veículo encontrado para carregar os dados...');
         await pagina.click(seletorResultado);
 
         // Espera renderizar os detalhes do veículo
-        await pagina.waitForFunction(() => document.querySelector('.car-title')?.innerText.trim().length > 2, { timeout: 15000 });
+        await pagina.waitForFunction(() => document.querySelector('.car-title')?.innerText.trim().length > 2, { timeout: 20000 });
         await new Promise(r => setTimeout(r, 1500));
 
+        console.log('📊 [SERVIDOR] Extraindo dados da página do veículo...');
         const dados = await pagina.evaluate((p) => {
             const textoGeral = document.body.innerText;
             const versaoCarro = document.querySelector('.car-title')?.innerText.trim() || 'Modelo Não Informado';
@@ -262,13 +271,15 @@ async function buscarPlacaNoSite(placa, tentativa = 1) {
             }
         }
 
+        console.log(`✅ [SERVIDOR] Consulta realizada com sucesso para a placa: ${placaLimpa}`);
         return dados;
 
     } catch (erro) {
-        console.error(`❌ Erro durante a busca da placa (Tentativa ${tentativa}):`, erro.message);
+        console.error(`❌ [SERVIDOR] Erro na busca (Tentativa ${tentativa}):`, erro.message);
 
         // Apenas força o reset do navegador se for erro crítico/conexão/login, não se for placa ausente
         if (tentativa <= 1 && !erro.message.includes('não encontrada')) {
+            console.log('🔄 [SERVIDOR] Resetando sessão do Puppeteer para nova tentativa...');
             await resetarSessao();
             return await buscarPlacaNoSite(placa, tentativa + 1);
         }
@@ -306,7 +317,7 @@ app.get('/api/buscar-placa', (req, res) => {
                 res.json({ sucesso: true, dados });
             }
         } catch (err) {
-            console.error('❌ Falha capturada na rota /api/buscar-placa:', err.message);
+            console.error('❌ [SERVIDOR] Falha na rota /api/buscar-placa:', err.message);
             if (!res.headersSent) {
                 res.status(500).json({ sucesso: false, erro: err.message || 'Erro ao realizar a consulta' });
             }
@@ -315,7 +326,7 @@ app.get('/api/buscar-placa', (req, res) => {
 });
 
 app.listen(PORT, async () => {
-    console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
     console.log('⏳ Inicializando o robô em segundo plano...');
     
     try {
