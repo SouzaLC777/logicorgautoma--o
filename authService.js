@@ -8,20 +8,19 @@ puppeteer.use(StealthPlugin());
 const AUTO_EMAIL = process.env.AUTO_EMAIL || '25gustavooliveira@gmail.com';
 const AUTO_SENHA = process.env.AUTO_SENHA || '02019988GU';
 const TOKEN_FILE = path.join(__dirname, 'sessao_autoavaliar.json');
+const USER_DATA_DIR = path.join(__dirname, '.chrome_user_data');
 
 let navegadorGlobal = null;
 let paginaGlobal = null;
 let loginEmAndamento = null;
 let intervalKeepAlive = null;
 
-// Função auxiliar para encontrar o executável do Chrome instalado no servidor/local
 function obterCaminhoChrome() {
     if (process.env.PUPPETEER_EXECUTABLE_PATH) {
         return process.env.PUPPETEER_EXECUTABLE_PATH;
     }
 
     try {
-        // Tenta resolver dinamicamente via API nativa do Puppeteer
         const puppeteerCore = require('puppeteer');
         if (puppeteerCore.executablePath) {
             const pathNatividades = puppeteerCore.executablePath();
@@ -29,10 +28,9 @@ function obterCaminhoChrome() {
         }
     } catch (e) {}
 
-    // Locais padrão de cache no Render/Linux
     const possibilidadesCache = [
-        '/opt/render/.cache/puppeteer',
         path.join(process.cwd(), '.cache', 'puppeteer'),
+        '/opt/render/.cache/puppeteer',
         path.join(require('os').homedir(), '.cache', 'puppeteer')
     ];
 
@@ -149,7 +147,8 @@ async function _executarLogin() {
     }
 
     const launchOptions = {
-        headless: 'new',
+        headless: 'shell',
+        userDataDir: USER_DATA_DIR,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -169,6 +168,9 @@ async function _executarLogin() {
 
     navegadorGlobal = await puppeteer.launch(launchOptions);
     paginaGlobal = await navegadorGlobal.newPage();
+    
+    // User-Agent fixo para evitar detecção de headless
+    await paginaGlobal.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
     await paginaGlobal.setViewport({ width: 1280, height: 800 });
 
     // TENTA RESTAURAR SESSÃO POR TOKEN
@@ -224,7 +226,14 @@ async function _executarLogin() {
         }
     });
 
-    await new Promise(r => setTimeout(r, 6000));
+    // AGUARDA REDIRECIONAMENTO SAIR DA PÁGINA DE LOGIN
+    try {
+        await paginaGlobal.waitForFunction(() => !window.location.href.includes('/login'), { timeout: 20000 });
+        await paginaGlobal.waitForNetworkIdle({ timeout: 10000 }).catch(() => {});
+    } catch (e) {
+        console.warn('⚠️ [AUTH] Navegação de login demorou mais que o esperado, prosseguindo...');
+    }
+
     await fecharModalAlertaSeExistir(paginaGlobal);
     await salvarTokenSessao(paginaGlobal);
 
