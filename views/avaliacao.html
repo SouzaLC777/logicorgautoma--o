@@ -1190,7 +1190,7 @@
       renderizarDadosAvaliacao(itemSelecionado);
     }
 
-    /* LÓGICA PRINCIPAL DE BUSCA DA PLACA */
+    /* LÓGICA PRINCIPAL DE BUSCA DA PLACA COM LOGS DETALHADOS */
     async function handlePlateSearch() {
       const input = document.getElementById('plate-input');
       const btn = document.getElementById('btn-search');
@@ -1212,17 +1212,15 @@
       resultsPanel.style.display = 'none';
 
       try {
+        console.log(`🔍 [BUSCA] Iniciando requisição para a placa: ${placa}`);
         const response = await fetch(`/api/buscar-placa?placa=${encodeURIComponent(placa)}`);
         
-        if (!response.ok) {
-          showInputError('Nenhuma avaliação encontrada para esta placa.');
-          return;
-        }
+        const res = await response.json().catch(() => ({}));
 
-        const res = await response.json();
-
-        if (!res.sucesso) {
-          showInputError('Nenhuma avaliação encontrada para esta placa.');
+        if (!response.ok || !res.sucesso) {
+          const mensagemErro = res.mensagem || res.erro || `Erro no servidor (Status ${response.status})`;
+          console.error('❌ [BUSCA] Servidor retornou erro:', mensagemErro, res);
+          showInputError(`Falha na consulta: ${mensagemErro}`);
           return;
         }
 
@@ -1236,12 +1234,14 @@
         }
 
         if (listaBruta.length === 0) {
+          console.warn('⚠️ [BUSCA] Nenhum registro retornado na lista.');
           showInputError('Nenhuma avaliação encontrada para esta placa.');
           return;
         }
 
-        const avaliacoesValidas = listaBruta;
+        console.log('✅ [BUSCA] Dados recebidos com sucesso:', listaBruta);
 
+        const avaliacoesValidas = listaBruta;
         avaliacoesValidas.sort((a, b) => {
           const timeA = parseDataBR(a.dataMesa || a.data);
           const timeB = parseDataBR(b.dataMesa || b.data);
@@ -1257,8 +1257,8 @@
         }
 
       } catch (err) {
-        showInputError('Nenhuma avaliação encontrada para esta placa.');
-        console.error('Detalhe do Erro:', err);
+        console.error('❌ [BUSCA] Erro na requisição HTTP/Network:', err);
+        showInputError(`Erro de conexão com a API: ${err.message}`);
       } finally {
         btn.disabled = false;
         btn.innerText = 'BUSCAR';
