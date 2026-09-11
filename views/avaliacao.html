@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultar Avaliação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- RESET & PALETA DE CORES (PRETO & AMARELO) --- */
+    :root {
+      --bg-color: #0a0a0c;
+      --card-bg: rgba(22, 22, 26, 0.75);
+      --yellow-primary: #ffc800;
+      --yellow-hover: #ffe066;
+      --yellow-glow: rgba(255, 200, 0, 0.25);
+      --red-error: #ff4d4d;
+      --red-glow: rgba(255, 77, 77, 0.3);
+      --text-white: #ffffff;
+      --text-muted: #a0a0ab;
+      --border-color: rgba(255, 200, 0, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* --- EFEITOS DE LUZ AMBIENTE --- */
+    .glow-spot-1 {
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(255, 200, 0, 0.18) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-spot-2 {
+      position: absolute;
+      bottom: -150px;
+      right: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 200, 0, 0.12) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* --- NAVBAR --- */
+    header.navbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2rem;
+      background: rgba(10, 10, 12, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--yellow-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem 0.8rem;
+      width: 240px;
+      transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--yellow-primary);
+      box-shadow: 0 0 10px var(--yellow-glow);
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    nav.nav-menu {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav-item {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: color 0.3s ease;
+      position: relative;
+      padding: 0.5rem 0;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--yellow-primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--yellow-primary);
+      box-shadow: 0 0 8px var(--yellow-primary);
+    }
+
+    .btn-connect {
+      background: var(--yellow-primary);
+      color: #000;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .btn-connect:hover {
+      background: var(--yellow-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 200, 0, 0.3);
+    }
+
+    /* --- CONTEÚDO PRINCIPAL --- */
+    main.container {
+      position: relative;
+      z-index: 5;
+      max-width: 1100px;
+      margin: 2.5rem auto 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .search-plate-wrapper {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .search-plate-wrapper h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .plate-input-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 0.8rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .input-field-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .input-field-wrapper input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+
+    .input-field-wrapper input:focus {
+      border-color: var(--yellow-primary);
+      box-shadow: 0 0 10px var(--yellow-glow);
+    }
+
+    .input-field-wrapper input.input-error {
+      border-color: var(--red-error) !important;
+      box-shadow: 0 0 12px var(--red-glow) !important;
+    }
+
+    .plate-error-message {
+      display: none;
+      color: var(--red-error);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.6rem;
+      text-align: center;
+      letter-spacing: 0.3px;
+      width: 100%;
+    }
+
+    .btn-search-plate {
+      background: var(--yellow-primary);
+      color: #000;
+      border: none;
+      padding: 0.8rem 1.8rem;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+      height: 48px;
+    }
+
+    .btn-search-plate:hover {
+      background: var(--yellow-hover);
+      box-shadow: 0 4px 15px rgba(255, 200, 0, 0.3);
+    }
+
+    .btn-search-plate:disabled {
+      background: #555;
+      color: #888;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* PAINEL DE RESULTADOS */
+    #evaluation-results {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .vehicle-header-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .vehicle-title h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 0.3rem;
+    }
+
+    .vehicle-title p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .badge-status {
+      background: rgba(255, 200, 0, 0.15);
+      color: var(--yellow-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-status.badge-pending {
+      background: rgba(255, 77, 77, 0.15);
+      color: var(--red-error);
+      border: 1px solid var(--red-error);
+      box-shadow: 0 0 10px var(--red-glow);
+    }
+
+    .evaluation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .gallery-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .main-photo-frame {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      user-select: none;
+    }
+
+    .main-photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .main-photo-frame:hover img {
+      transform: scale(1.03);
+    }
+
+    .nav-photo-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      color: var(--yellow-primary);
+      border: 1px solid var(--border-color);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+
+    .nav-photo-btn:hover {
+      background: var(--yellow-primary);
+      color: #000;
+    }
+
+    .nav-photo-prev { left: 10px; }
+    .nav-photo-next { right: 10px; }
+
+    .photo-hint {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      color: var(--yellow-primary);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+      z-index: 5;
+    }
+
+    .photo-counter {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .details-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .details-container h4, .management-card h4 {
+      font-size: 1.1rem;
+      color: var(--yellow-primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 0.6rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .info-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-item label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+
+    .info-item span {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-white);
+    }
+
+    .valuation-highlight {
+      background: linear-gradient(135deg, rgba(255, 200, 0, 0.15) 0%, rgba(22, 22, 26, 0.9) 100%);
+      border: 1px solid var(--yellow-primary);
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+    }
+
+    .valuation-highlight label {
+      font-size: 0.8rem;
+      color: var(--yellow-primary);
+      font-weight: 800;
+      letter-spacing: 1.5px;
+    }
+
+    .valuation-highlight h2 {
+      font-size: 2.2rem;
+      color: #fff;
+      font-weight: 800;
+      margin: 0.4rem 0;
+    }
+
+    .sub-highlight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(255, 200, 0, 0.2);
+    }
+
+    .sub-highlight-item label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .sub-highlight-item span {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-top: 0.2rem;
+    }
+
+    .management-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .management-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .obs-container {
+      margin-top: 0.5rem;
+    }
+
+    .obs-container label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .obs-content {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 1rem;
+      color: #d0d0d8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* MODAIS */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-card {
+      background: #121216;
+      border: 1px solid var(--yellow-primary);
+      box-shadow: 0 0 30px var(--yellow-glow);
+      border-radius: 16px;
+      padding: 2.2rem;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      transform: translateY(-20px) scale(0.95);
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+
+    .modal-card h3 {
+      font-size: 1.15rem;
+      color: #fff;
+      margin-bottom: 1.2rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .error-msg {
+      color: var(--red-error);
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      display: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-muted);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-confirm {
+      background: var(--yellow-primary);
+      border: none;
+      color: #000;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* LIGHTBOX MODAL */
+    .lightbox-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .btn-lightbox-close {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      cursor: pointer;
+      z-index: 230;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-lightbox-close:hover {
+      background: var(--yellow-primary);
+      color: #000;
+    }
+
+    .btn-lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      color: var(--yellow-primary);
+      border: 1px solid var(--border-color);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.6rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 230;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn-lightbox-nav:hover {
+      background: var(--yellow-primary);
+      color: #000;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .btn-lightbox-prev { left: 25px; }
+    .btn-lightbox-next { right: 25px; }
+
+    .lightbox-wrapper {
+      max-width: 85vw;
+      max-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      user-select: none;
+    }
+
+    /* RESPONSIVIDADE MEDIA QUERIES */
+    @media (max-width: 850px) {
+      .evaluation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header.navbar {
+        justify-content: center;
+      }
+      .search-box {
+        width: 100%;
+      }
+      .plate-input-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-search-plate {
+        width: 100%;
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Efeitos de Luz no Fundo -->
+  <div class="glow-spot-1"></div>
+  <div class="glow-spot-2"></div>
+
+  <!-- Barra de Navegação -->
+  <header class="navbar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span>PAINEL</span>
+    </div>
+
+    <div class="search-box">
+      <input type="text" placeholder="O que você procura?" />
+    </div>
+
+    <nav class="nav-menu">
+      <a href="inicio.html" class="nav-item">INÍCIO</a>
+      <a href="avaliacao.html" class="nav-item active">AVALIAÇÃO</a>
+      <a href="laudo.html" class="nav-item">LAUDO</a>
+    </nav>
+
+    <button class="btn-connect" onclick="openAuthModal()">CONECTAR BOT</button>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="container">
+    
+    <!-- BARRA DE BUSCA DA PLACA -->
+    <div class="search-plate-wrapper">
+      <h2>CONSULTAR AVALIAÇÃO</h2>
+      <div class="plate-input-container">
+        
+        <div class="input-field-wrapper">
+          <input 
+            type="text" 
+            id="plate-input" 
+            placeholder="Digite a placa (ex: ABC1D23)" 
+            maxlength="7" 
+            oninput="handleInputClean()"
+            onkeydown="if(event.key === 'Enter') handlePlateSearch()"
+          />
+          <p id="plate-error-msg" class="plate-error-message"></p>
+        </div>
+
+        <button class="btn-search-plate" id="btn-search" onclick="handlePlateSearch()">
+          BUSCAR
+        </button>
+      </div>
+    </div>
+
+    <!-- PAINEL DE RESULTADOS -->
+    <div id="evaluation-results">
+      
+      <!-- CABEÇALHO DO VEÍCULO -->
+      <div class="vehicle-header-card">
+        <div class="vehicle-title">
+          <h3 id="res-model">---</h3>
+          <p id="res-subtitle">Ano --- • Câmbio: ---</p>
+        </div>
+        <span class="badge-status" id="res-badge-status">Avaliação Concluída</span>
+      </div>
+
+      <!-- FOTOS E ESPECIFICAÇÕES -->
+      <div class="evaluation-grid">
+        <div class="gallery-container">
+          <div class="main-photo-frame" id="main-photo-frame">
+            <div class="photo-hint">🔍 Clique para ampliar</div>
+            
+            <button class="nav-photo-btn nav-photo-prev" onclick="prevPhoto(event)">❮</button>
+            <button class="nav-photo-btn nav-photo-next" onclick="nextPhoto(event)">❯</button>
+            
+            <img id="main-photo" src="" alt="Foto do Veículo" onclick="openLightbox()" onerror="this.src='https://via.placeholder.com/800x600?text=Sem+Foto'" />
+            <div class="photo-counter" id="photo-count">0 / 0</div>
+          </div>
+        </div>
+
+        <div class="details-container">
+          <h4>Especificações da Consulta</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Placa</label>
+              <span id="res-plate">---</span>
+            </div>
+            <div class="info-item">
+              <label>Quilometragem</label>
+              <span id="res-km">---</span>
+            </div>
+            <div class="info-item">
+              <label>Combustível</label>
+              <span id="res-fuel">---</span>
+            </div>
+            <div class="info-item">
+              <label>Tabela FIPE</label>
+              <span id="res-fipe">---</span>
+            </div>
+          </div>
+
+          <div class="valuation-highlight">
+            <label>VALOR PAGO</label>
+            <h2 id="res-paid-value">R$ 0,00</h2>
+            <div class="sub-highlight-grid">
+              <div class="sub-highlight-item">
+                <label>% da FIPE</label>
+                <span id="res-fipe-pct">---</span>
+              </div>
+              <div class="sub-highlight-item">
+                <label>Abaixo da FIPE</label>
+                <span id="res-fipe-diff">---</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GESTÃO, RESPONSÁVEIS E OBSERVAÇÕES -->
+      <div class="management-card">
+        <h4>Dados da Avaliação e Responsáveis</h4>
+        
+        <div class="management-grid">
+          <div class="info-item">
+            <label>Empresa</label>
+            <span id="res-company">---</span>
+          </div>
+          <div class="info-item">
+            <label>Solicitante</label>
+            <span id="res-requester">---</span>
+          </div>
+          <div class="info-item">
+            <label>Avaliador</label>
+            <span id="res-evaluator">---</span>
+          </div>
+          <div class="info-item">
+            <label>Precificador</label>
+            <span id="res-pricer">---</span>
+          </div>
+        </div>
+
+        <div class="obs-container">
+          <label>Observações</label>
+          <div class="obs-content" id="res-obs">Nenhuma observação registrada.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL PARA ACESSO DO DONO -->
+  <div id="modal-auth" class="modal-overlay">
+    <div class="modal-card">
+      <span class="modal-icon">🔐</span>
+      <h3>Essa função é somente para o dono do site!</h3>
+      
+      <div class="input-group">
+        <label for="admin-password">senha:</label>
+        <input type="password" id="admin-password" placeholder="Digite a senha..." />
+        <p id="auth-error" class="error-msg">Senha incorreta. Tente novamente!</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-close" onclick="closeAuthModal()">fechar</button>
+        <button class="btn-confirm" onclick="verifyPassword()">confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SELEÇÃO DE AVALIAÇÕES (MÚLTIPLAS OPÇÕES) -->
+  <div id="modal-selection" class="modal-overlay">
+    <div class="modal-card" style="max-width: 580px; text-align: left;">
+      <span class="modal-icon" style="text-align: center;">📋</span>
+      <h3 style="text-align: center;">Múltiplas Avaliações Encontradas</h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.2rem; text-align: center;">
+        Selecione qual avaliação deseja visualizar (ordenadas da mais recente para a mais antiga pela Data Mesa):
+      </p>
+      
+      <div id="selection-list" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; padding-right: 4px;">
+        <!-- Itens injetados via JS -->
+      </div>
+
+      <div class="modal-actions" style="justify-content: center;">
+        <button class="btn-close" onclick="closeSelectionModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LIGHTBOX COM BOTOES DE NAVEGACAO -->
+  <div id="lightbox-modal" class="lightbox-modal" onclick="closeLightbox(event)">
+    <button class="btn-lightbox-close" onclick="closeLightbox(event)">✕</button>
+    
+    <button class="btn-lightbox-nav btn-lightbox-prev" onclick="prevPhoto(event)">❮</button>
+    <button class="btn-lightbox-nav btn-lightbox-next" onclick="nextPhoto(event)">❯</button>
+
+    <div class="lightbox-wrapper" id="lightbox-wrapper">
+      <img id="lightbox-img" class="lightbox-img" src="" alt="Foto Ampliada" onerror="this.src='https://via.placeholder.com/800x600?text=Sem+Foto'" />
+    </div>
+  </div>
+
+  <script>
+    /* VARIÁVEIS DA GALERIA DE FOTOS E SELEÇÃO */
+    let currentPhotoIndex = 0;
+    let vehiclePhotos = [];
+    let avaliacoesDisponiveis = [];
+    const PLACEHOLDER_IMG = 'https://via.placeholder.com/800x600?text=Sem+Foto';
+
+    /* FUNÇÕES DE FEEDBACK DE ERRO NO INPUT */
+    function showInputError(mensagem) {
+      const input = document.getElementById('plate-input');
+      const errorEl = document.getElementById('plate-error-msg');
+      
+      if (input) input.classList.add('input-error');
+      if (errorEl) {
+        errorEl.innerText = mensagem;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function clearInputError() {
+      const input = document.getElementById('plate-input');
+      const errorEl = document.getElementById('plate-error-msg');
+
+      if (input) input.classList.remove('input-error');
+      if (errorEl) {
+        errorEl.innerText = '';
+        errorEl.style.display = 'none';
+      }
+    }
+
+    function handleInputClean() {
+      const input = document.getElementById('plate-input');
+      input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      clearInputError();
+    }
+
+    /* FUNÇÃO PARA PARSE DE DATA BRASILEIRA (DD/MM/YYYY HH:mm:ss) */
+    function parseDataBR(dataStr) {
+      if (!dataStr || dataStr === '-' || dataStr === 'N/A') return 0;
+      
+      const cleanStr = dataStr.trim().replace('hs', '').replace('h', '');
+      const parts = cleanStr.split(' ');
+      const dataPart = parts[0];
+      const horaPart = parts[1] || '00:00:00';
+      
+      const [dia, mes, ano] = dataPart.split('/').map(Number);
+      if (!dia || !mes || !ano) return 0;
+
+      const [hora, min, seg] = horaPart.split(':').map(Number);
+      return new Date(ano, mes - 1, dia, hora || 0, min || 0, seg || 0).getTime();
+    }
+
+    function updatePhotoDisplay() {
+      const photoImg = document.getElementById('main-photo');
+      const counter = document.getElementById('photo-count');
+      const lightboxImg = document.getElementById('lightbox-img');
+
+      if (vehiclePhotos.length > 0) {
+        const activeUrl = vehiclePhotos[currentPhotoIndex];
+        if (photoImg) photoImg.src = activeUrl;
+        if (lightboxImg) lightboxImg.src = activeUrl;
+        if (counter) counter.innerText = `${currentPhotoIndex + 1} / ${vehiclePhotos.length}`;
+      } else {
+        if (photoImg) photoImg.src = PLACEHOLDER_IMG;
+        if (lightboxImg) lightboxImg.src = PLACEHOLDER_IMG;
+        if (counter) counter.innerText = '0 / 0';
+      }
+    }
+
+    function prevPhoto(e) {
+      if (e) e.stopPropagation();
+      if (vehiclePhotos.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + vehiclePhotos.length) % vehiclePhotos.length;
+      updatePhotoDisplay();
+    }
+
+    function nextPhoto(e) {
+      if (e) e.stopPropagation();
+      if (vehiclePhotos.length === 0) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % vehiclePhotos.length;
+      updatePhotoDisplay();
+    }
+
+    /* PREENCHE A TELA COM OS DADOS DA AVALIAÇÃO SELECIONADA */
+    function renderizarDadosAvaliacao(d) {
+      document.getElementById('res-model').innerText = d.versaoCarro || d.modelo || 'Modelo Não Informado';
+      
+      const ano = d.ano || 'N/I';
+      const cambio = d.cambio || 'N/I';
+      document.getElementById('res-subtitle').innerText = `Ano ${ano} • Câmbio: ${cambio}`;
+
+      const badgeEl = document.getElementById('res-badge-status');
+      const statusTexto = (d.status || '').toUpperCase();
+
+      const eSolicitada = statusTexto.includes('SOLICITADA');
+      const eAguardandoMesa = statusTexto.includes('AGUARDANDO MESA') || statusTexto.includes('AGUARDANDO');
+      const eDesativada = statusTexto.includes('DESATIVADO');
+
+      const gridEl = document.querySelector('.evaluation-grid');
+      const mgmtEl = document.querySelector('.management-card');
+
+      if (eSolicitada || eAguardandoMesa || eDesativada) {
+        badgeEl.className = 'badge-status badge-pending';
+
+        if (eSolicitada) {
+          badgeEl.innerText = 'AVALIAÇÃO SOLICITADA';
+        } else if (eAguardandoMesa) {
+          badgeEl.innerText = 'AVALIAÇÃO AGUARDANDO MESA';
+        } else if (eDesativada) {
+          badgeEl.innerText = 'AVALIAÇÃO DESATIVADA';
+        }
+
+        if (gridEl) gridEl.style.display = 'none';
+        if (mgmtEl) mgmtEl.style.display = 'none';
+
+      } else {
+        badgeEl.className = 'badge-status';
+        badgeEl.innerText = d.status || 'AVALIAÇÃO CONCLUÍDA';
+
+        if (gridEl) gridEl.style.display = 'grid';
+        if (mgmtEl) mgmtEl.style.display = 'flex';
+
+        document.getElementById('res-plate').innerText = d.placa || '---';
+        document.getElementById('res-km').innerText = d.quilometragem || 'N/I';
+        document.getElementById('res-fuel').innerText = d.combustivel || 'N/I';
+        document.getElementById('res-fipe').innerText = d.tabelaFipe || 'N/I';
+        document.getElementById('res-paid-value').innerText = d.valorPago || 'R$ 0,00';
+        document.getElementById('res-fipe-pct').innerText = d.porcentagemFipe || '---';
+        document.getElementById('res-fipe-diff').innerText = d.diferencaFipe || '---';
+        
+        document.getElementById('res-company').innerText = d.loja || d.empresa || '---';
+        document.getElementById('res-requester').innerText = d.solicitante || '---';
+        document.getElementById('res-evaluator').innerText = d.vistoriador || d.avaliador || '---';
+        document.getElementById('res-pricer').innerText = d.precificador || '---';
+        
+        if (Array.isArray(d.fotos) && d.fotos.length > 0) {
+          vehiclePhotos = d.fotos;
+        } else if (d.foto) {
+          vehiclePhotos = [d.foto];
+        } else {
+          vehiclePhotos = [];
+        }
+        
+        currentPhotoIndex = 0;
+        updatePhotoDisplay();
+
+        const obsTexto = d.observacoes && d.observacoes.trim() !== '' ? d.observacoes : 'Nenhuma observação registrada.';
+        document.getElementById('res-obs').innerText = obsTexto;
+      }
+
+      document.getElementById('evaluation-results').style.display = 'flex';
+    }
+
+    /* MODAL DE SELEÇÃO QUANDO HOUVER MAIS DE UMA AVALIAÇÃO */
+    function abrirModalSelecao(lista) {
+      const listContainer = document.getElementById('selection-list');
+      listContainer.innerHTML = '';
+
+      lista.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 0.9rem 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+        `;
+        
+        const dataMesaStr = item.dataMesa || item.data || 'Data N/I';
+        const modeloStr = item.versaoCarro || item.modelo || 'Veículo';
+        const statusStr = item.status || 'Avaliado';
+
+        card.innerHTML = `
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: #fff;">${modeloStr}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+              Data (Mesa): <strong style="color: var(--yellow-primary);">${dataMesaStr}</strong>
+            </div>
+            <div style="font-size: 0.75rem; color: #a0a0ab; margin-top: 1px;">
+              Status: ${statusStr}
+            </div>
+          </div>
+          <button class="btn-confirm" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;" onclick="selecionarAvaliacao(${index})">
+            VISUALIZAR
+          </button>
+        `;
+        listContainer.appendChild(card);
+      });
+
+      document.getElementById('modal-selection').classList.add('active');
+    }
+
+    function closeSelectionModal() {
+      document.getElementById('modal-selection').classList.remove('active');
+    }
+
+    function selecionarAvaliacao(index) {
+      const itemSelecionado = avaliacoesDisponiveis[index];
+      closeSelectionModal();
+      renderizarDadosAvaliacao(itemSelecionado);
+    }
+
+    /* LÓGICA PRINCIPAL DE BUSCA DA PLACA */
+    async function handlePlateSearch() {
+      const input = document.getElementById('plate-input');
+      const btn = document.getElementById('btn-search');
+      const resultsPanel = document.getElementById('evaluation-results');
+      const placa = input.value.trim().toUpperCase();
+
+      clearInputError();
+
+      const regexPlaca = /^[A-Z]{3}[0-9]{1}[A-Z0-9]{1}[0-9]{2}$/;
+
+      if (!placa || placa.length !== 7 || !regexPlaca.test(placa)) {
+        showInputError('Placa inválida! Utilize o padrão ABC1234 ou ABC1D23.');
+        input.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'CONSULTANDO...';
+      resultsPanel.style.display = 'none';
+
+      try {
+        const response = await fetch(`/api/buscar-placa?placa=${encodeURIComponent(placa)}`);
+        
+        if (!response.ok) {
+          showInputError('Nenhuma avaliação encontrada para esta placa.');
+          return;
+        }
+
+        const res = await response.json();
+
+        if (!res.sucesso) {
+          showInputError('Nenhuma avaliação encontrada para esta placa.');
+          return;
+        }
+
+        let listaBruta = [];
+        if (Array.isArray(res.dados)) {
+          listaBruta = res.dados;
+        } else if (Array.isArray(res.avaliacoes)) {
+          listaBruta = res.avaliacoes;
+        } else if (res.dados && typeof res.dados === 'object') {
+          listaBruta = [res.dados];
+        }
+
+        if (listaBruta.length === 0) {
+          showInputError('Nenhuma avaliação encontrada para esta placa.');
+          return;
+        }
+
+        const avaliacoesValidas = listaBruta;
+
+        avaliacoesValidas.sort((a, b) => {
+          const timeA = parseDataBR(a.dataMesa || a.data);
+          const timeB = parseDataBR(b.dataMesa || b.data);
+          return timeB - timeA;
+        });
+
+        avaliacoesDisponiveis = avaliacoesValidas;
+
+        if (avaliacoesValidas.length === 1) {
+          renderizarDadosAvaliacao(avaliacoesValidas[0]);
+        } else {
+          abrirModalSelecao(avaliacoesValidas);
+        }
+
+      } catch (err) {
+        showInputError('Nenhuma avaliação encontrada para esta placa.');
+        console.error('Detalhe do Erro:', err);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'BUSCAR';
+      }
+    }
+
+    /* LÓGICA DO MODAL DE AUTENTICAÇÃO DO DONO */
+    function openAuthModal() {
+      const modal = document.getElementById('modal-auth');
+      const input = document.getElementById('admin-password');
+      const errorMsg = document.getElementById('auth-error');
+
+      input.value = '';
+      errorMsg.style.display = 'none';
+      modal.classList.add('active');
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeAuthModal() {
+      document.getElementById('modal-auth').classList.remove('active');
+    }
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const errorMsg = document.getElementById('auth-error');
+
+      if (input === '197119') {
+        errorMsg.style.display = 'none';
+        closeAuthModal();
+        alert('Acesso Autorizado! Redirecionando para a área de conexão do Bot...');
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    document.getElementById('admin-password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') verifyPassword();
+    });
+
+    /* LÓGICA DO LIGHTBOX */
+    function openLightbox() {
+      const mainImg = document.getElementById('main-photo');
+      const lightbox = document.getElementById('lightbox-modal');
+      const lightboxImg = document.getElementById('lightbox-img');
+
+      if (mainImg && vehiclePhotos.length > 0) {
+        lightboxImg.src = vehiclePhotos[currentPhotoIndex];
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeLightbox(e) {
+      if (!e || e.target.id === 'lightbox-modal' || e.target.closest('.btn-lightbox-close')) {
+        const lightbox = document.getElementById('lightbox-modal');
+        lightbox.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    /* ATALHOS DE TECLADO */
+    document.addEventListener('keydown', function(e) {
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+      const lightbox = document.getElementById('lightbox-modal');
+      const isLightboxActive = lightbox.classList.contains('active');
+      const authModal = document.getElementById('modal-auth');
+      const selectionModal = document.getElementById('modal-selection');
+
+      if (e.key === 'Escape') {
+        if (isLightboxActive) closeLightbox();
+        if (authModal.classList.contains('active')) closeAuthModal();
+        if (selectionModal.classList.contains('active')) closeSelectionModal();
+      }
+      
+      if (isTyping) return;
+
+      if (document.getElementById('evaluation-results').style.display === 'flex' || isLightboxActive) {
+        if (e.key === 'ArrowLeft') prevPhoto();
+        if (e.key === 'ArrowRight') nextPhoto();
+      }
+    });
+
+    /* NAVEGAÇÃO POR SWIPE */
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    function handleTouchStart(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }
+
+    function handleTouchEnd(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 40) nextPhoto();
+      if (touchEndX > touchStartX + 40) prevPhoto();
+    }
+
+    const frameEl = document.getElementById('main-photo-frame');
+    if (frameEl) {
+      frameEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+      frameEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    const lightboxEl = document.getElementById('lightbox-modal');
+    if (lightboxEl) {
+      lightboxEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+      lightboxEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+  </script>
+</body>
+</html>

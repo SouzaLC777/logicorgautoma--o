@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel - Início</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- RESET & PALETA DE CORES (PRETO & AMARELO) --- */
+    :root {
+      --bg-color: #0a0a0c;
+      --card-bg: rgba(22, 22, 26, 0.75);
+      --yellow-primary: #ffc800;
+      --yellow-hover: #ffe066;
+      --yellow-glow: rgba(255, 200, 0, 0.25);
+      --text-white: #ffffff;
+      --text-muted: #a0a0ab;
+      --border-color: rgba(255, 200, 0, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* --- EFEITOS DE LUZ AMBIENTE --- */
+    .glow-spot-1 {
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(255, 200, 0, 0.18) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-spot-2 {
+      position: absolute;
+      bottom: -150px;
+      right: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 200, 0, 0.12) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* --- NAVBAR --- */
+    header.navbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 4rem;
+      background: rgba(10, 10, 12, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--yellow-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem 0.8rem;
+      width: 260px;
+      transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--yellow-primary);
+      box-shadow: 0 0 10px var(--yellow-glow);
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    nav.nav-menu {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-item {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: color 0.3s ease;
+      position: relative;
+      padding: 0.5rem 0;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--yellow-primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--yellow-primary);
+      box-shadow: 0 0 8px var(--yellow-primary);
+    }
+
+    .btn-connect {
+      background: var(--yellow-primary);
+      color: #000;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .btn-connect:hover {
+      background: var(--yellow-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 200, 0, 0.3);
+    }
+
+    /* --- CONTEÚDO PRINCIPAL --- */
+    main.container {
+      position: relative;
+      z-index: 5;
+      max-width: 1100px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 5rem 1rem;
+    }
+
+    .hero h1 {
+      font-size: 4.5rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      margin-bottom: 1.5rem;
+      color: var(--text-white);
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 650px;
+      margin: 0 auto 2.5rem auto;
+      line-height: 1.6;
+    }
+
+    /* MODAL DE AUTENTICAÇÃO */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-card {
+      background: #121216;
+      border: 1px solid var(--yellow-primary);
+      box-shadow: 0 0 30px var(--yellow-glow);
+      border-radius: 16px;
+      padding: 2.2rem;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      transform: translateY(-20px) scale(0.95);
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+
+    .modal-card h3 {
+      font-size: 1.15rem;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .error-msg {
+      color: #ff4d4d;
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      display: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-muted);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-confirm {
+      background: var(--yellow-primary);
+      border: none;
+      color: #000;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Efeitos de Luz no Fundo -->
+  <div class="glow-spot-1"></div>
+  <div class="glow-spot-2"></div>
+
+  <!-- Barra de Navegação -->
+  <header class="navbar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span>PAINEL</span>
+    </div>
+
+    <div class="search-box">
+      <input type="text" placeholder="O que você procura?" />
+    </div>
+
+    <nav class="nav-menu">
+      <a href="inicio.html" class="nav-item active">INÍCIO</a>
+      <a href="avaliacao.html" class="nav-item">AVALIAÇÃO</a>
+      <a href="laudo.html" class="nav-item">LAUDO</a>
+    </nav>
+
+    <button class="btn-connect" onclick="openAuthModal()">CONECTAR BOT</button>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="container">
+    <section class="hero">
+      <h1>BEM VINDO</h1>
+      <p>Esse site foi desenvolvido com a intenção de facilitar o processo de vendas e informações.</p>
+      <a href="avaliacao.html" class="btn-connect">EXPLORAR RECURSOS</a>
+    </section>
+  </main>
+
+  <!-- POPUP / MODAL PARA ACESSO DO DONO -->
+  <div id="modal-auth" class="modal-overlay">
+    <div class="modal-card">
+      <span class="modal-icon">🔐</span>
+      <h3>Essa função é somente para o dono do site!</h3>
+      
+      <div class="input-group">
+        <label for="admin-password">senha:</label>
+        <input type="password" id="admin-password" placeholder="Digite a senha..." />
+        <p id="auth-error" class="error-msg">Senha incorreta. Tente novamente!</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-close" onclick="closeAuthModal()">fechar</button>
+        <button class="btn-confirm" onclick="verifyPassword()">confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openAuthModal() {
+      const modal = document.getElementById('modal-auth');
+      const input = document.getElementById('admin-password');
+      const errorMsg = document.getElementById('auth-error');
+
+      input.value = '';
+      errorMsg.style.display = 'none';
+      modal.classList.add('active');
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeAuthModal() {
+      document.getElementById('modal-auth').classList.remove('active');
+    }
+
+    function verifyPassword() {
+      const input = document.getElementById('admin-password').value;
+      const errorMsg = document.getElementById('auth-error');
+
+      if (input === '197119') {
+        errorMsg.style.display = 'none';
+        closeAuthModal();
+        alert('Acesso Autorizado! Redirecionando para a área de conexão do Bot...');
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    document.getElementById('admin-password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') verifyPassword();
+    });
+  </script>
+</body>
+</html>
