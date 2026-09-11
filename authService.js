@@ -62,6 +62,7 @@ function obterCaminhoChrome() {
 
 async function salvarTokenSessao(pagina) {
     try {
+        if (!pagina || pagina.isClosed()) return;
         const cookies = await pagina.cookies();
         const localStorageData = await pagina.evaluate(() => JSON.stringify(localStorage));
         const sessionStorageData = await pagina.evaluate(() => JSON.stringify(sessionStorage));
@@ -111,6 +112,7 @@ async function aplicarTokenSessao(pagina) {
 
 async function fecharModalAlertaSeExistir(pagina) {
     try {
+        if (!pagina || pagina.isClosed()) return;
         await pagina.evaluate(() => {
             const modaisEOverlays = document.querySelectorAll(`
                 [data-pbz-popup], .pbz-pop-ov, #aa-popup-overlay,
@@ -169,13 +171,12 @@ async function _executarLogin() {
     navegadorGlobal = await puppeteer.launch(launchOptions);
     paginaGlobal = await navegadorGlobal.newPage();
     
-    // User-Agent fixo para evitar detecção de headless
     await paginaGlobal.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
     await paginaGlobal.setViewport({ width: 1280, height: 800 });
 
-    // TENTA RESTAURAR SESSÃO POR TOKEN
+    // RESTAURAÇÃO DE SESSÃO VIA TOKEN SALVO
     if (fs.existsSync(TOKEN_FILE)) {
-        console.log('🔄 [AUTH] Carregando token de sessão existente em segundo plano...');
+        console.log('🔄 [AUTH] Carregando token de sessão existente...');
         try {
             await paginaGlobal.goto('https://apps.autoavaliar.com.br/login/app', { waitUntil: 'domcontentloaded', timeout: 20000 });
             await aplicarTokenSessao(paginaGlobal);
@@ -189,7 +190,7 @@ async function _executarLogin() {
                 iniciarLoopManutencaoSessao();
                 return { navegador: navegadorGlobal, pagina: paginaGlobal };
             } else {
-                console.warn('⚠️ [AUTH] Token expirado ou inválido. Refazendo login com senha...');
+                console.warn('⚠️ [AUTH] Token expirado ou inválido. Refazendo login com credenciais...');
                 if (fs.existsSync(TOKEN_FILE)) fs.unlinkSync(TOKEN_FILE);
             }
         } catch (e) {
@@ -197,8 +198,8 @@ async function _executarLogin() {
         }
     }
 
-    // LOGIN FORMAL COM EMAIL E SENHA
-    console.log('🔑 [AUTH] Realizando login no sistema via credenciais...');
+    // LOGIN VIA EMAIL E SENHA
+    console.log('🔑 [AUTH] Realizando login via credenciais...');
     await paginaGlobal.goto('https://apps.autoavaliar.com.br/login/app', { waitUntil: 'networkidle2', timeout: 30000 });
 
     await paginaGlobal.evaluate((email, senha) => {
@@ -217,21 +218,30 @@ async function _executarLogin() {
     await paginaGlobal.evaluate(async () => {
         const btn = document.querySelector('button.g-recaptcha, button[type="submit"]');
         if (window.grecaptcha?.enterprise) {
-            window.grecaptcha.enterprise.ready(() => {
-                window.grecaptcha.enterprise.execute('6LdBJ1EnAAAAAJ4x-XjNdcRCfp8NSlfdAuHDckru', { action: 'login' })
-                    .then(token => window.submitWithRecaptcha ? window.submitWithRecaptcha(token) : btn?.click());
-            });
+            try {
+                window.grecaptcha.enterprise.ready(() => {
+                    window.grecaptcha.enterprise.execute('6LdBJ1EnAAAAAJ4x-XjNdcRCfp8NSlfdAuHDckru', { action: 'login' })
+                        .then(token => {
+                            if (window.submitWithRecaptcha) {
+                                window.submitWithRecaptcha(token);
+                            } else {
+                                btn?.click();
+                            }
+                        }).catch(() => btn?.click());
+                });
+            } catch (err) {
+                btn?.click();
+            }
         } else {
             btn?.click();
         }
     });
 
-    // AGUARDA REDIRECIONAMENTO SAIR DA PÁGINA DE LOGIN
     try {
         await paginaGlobal.waitForFunction(() => !window.location.href.includes('/login'), { timeout: 20000 });
         await paginaGlobal.waitForNetworkIdle({ timeout: 10000 }).catch(() => {});
     } catch (e) {
-        console.warn('⚠️ [AUTH] Navegação de login demorou mais que o esperado, prosseguindo...');
+        console.warn('⚠️ [AUTH] Transição pós-login demorou mais que o esperado, prosseguindo...');
     }
 
     await fecharModalAlertaSeExistir(paginaGlobal);
@@ -248,8 +258,8 @@ function iniciarLoopManutencaoSessao() {
         if (paginaGlobal && !paginaGlobal.isClosed()) {
             try {
                 if (paginaGlobal.url().includes('/login')) {
-                    console.log('⚠️ [AUTH-LOOP] Sessão deslogou. Efetuando novo login...');
-                    await _executarLogin();
+                    console.log('⚠️ [AUTH-LOOP] Sessão expirada. Efetuando novo login...');
+                    await obterSessaoAutenticada();
                 } else {
                     await salvarTokenSessao(paginaGlobal);
                 }

@@ -860,7 +860,7 @@
             <button class="nav-photo-btn nav-photo-prev" onclick="prevPhoto(event)">❮</button>
             <button class="nav-photo-btn nav-photo-next" onclick="nextPhoto(event)">❯</button>
             
-            <img id="main-photo" src="" alt="Foto do Veículo" onclick="openLightbox()" onerror="this.src='https://via.placeholder.com/800x600?text=Sem+Foto'" />
+            <img id="main-photo" src="" alt="Foto do Veículo" onclick="openLightbox()" onerror="handleImageError(this)" />
             <div class="photo-counter" id="photo-count">0 / 0</div>
           </div>
         </div>
@@ -981,7 +981,7 @@
     <button class="btn-lightbox-nav btn-lightbox-next" onclick="nextPhoto(event)">❯</button>
 
     <div class="lightbox-wrapper" id="lightbox-wrapper">
-      <img id="lightbox-img" class="lightbox-img" src="" alt="Foto Ampliada" onerror="this.src='https://via.placeholder.com/800x600?text=Sem+Foto'" />
+      <img id="lightbox-img" class="lightbox-img" src="" alt="Foto Ampliada" onerror="handleImageError(this)" />
     </div>
   </div>
 
@@ -990,7 +990,15 @@
     let currentPhotoIndex = 0;
     let vehiclePhotos = [];
     let avaliacoesDisponiveis = [];
-    const PLACEHOLDER_IMG = 'https://via.placeholder.com/800x600?text=Sem+Foto';
+
+    /* IMAGEM SVG PADRÃO EMBUTIDA (EVITA REQUISIÇÕES DE REDE E LOOPS INFINITOS) */
+    const PLACEHOLDER_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="100%" height="100%" fill="%2316161a"/><text x="50%" y="50%" fill="%23ffc800" font-family="sans-serif" font-size="26" font-weight="bold" text-anchor="middle" dy=".3em">SEM FOTO DISPONÍVEL</text></svg>';
+
+    /* TRATAMENTO DE ERRO DE IMAGEM PARA IMPEDIR LOOP INFINITO */
+    function handleImageError(imgEl) {
+      imgEl.onerror = null;
+      imgEl.src = PLACEHOLDER_IMG;
+    }
 
     /* FUNÇÕES DE FEEDBACK DE ERRO NO INPUT */
     function showInputError(mensagem) {
